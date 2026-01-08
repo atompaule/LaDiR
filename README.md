@@ -49,13 +49,12 @@ Instead of generating reasoning chains autoregressively, LaDiR performs **latent
 
 3. **Run VAE training**:
    ```bash
-   cd vae
-   bash ..scripts/train_vae.sh
+   bash scripts/train_vae.sh
    ```
 
 ### Training the Diffusion Model
    ```bash
-   bash scripts/train_vae.sh
+   bash scripts/train_diff.sh
    ```
 
 ## ⚙️ Configuration
