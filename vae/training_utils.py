@@ -1,22 +1,20 @@
-from transformers import Trainer, TrainerCallback
-import pathlib
-import os
-import torch
-import random
 import gc
-
 import math
+import os
+import pathlib
+import random
+
+import torch
+import torch.distributed as dist
 import wandb
-from peft import (
-    LoraConfig,
-)
+from peft import LoraConfig
 from tqdm import tqdm
+from transformers import Trainer, TrainerCallback
+
 from model_vae import VAE
 
-import torch.distributed as dist
-
-local_rank = int(os.environ["LOCAL_RANK"])
-device = torch.device(local_rank)
+local_rank = int(os.environ.get("LOCAL_RANK", 0))
+device = torch.device(local_rank) if torch.cuda.is_available() else torch.device("cpu")
 
 def run_inference(model, lines):
     model.eval()
@@ -334,7 +332,7 @@ def pretrain_tokenize_function(
         # decoder part: note that in v2, we add mem_tokens to the prompt_ids for easy implementation; which is different from v1 implementation where mem tokens are not in the prompt_ids
         if ae:  # autoencoding objective
             # Why is it mem[0]? Filler memory token, will be overwritten during forward pass.
-            prompt_ids = mem + [ae_token_id]
+            prompt_ids = mem * num_segments + [ae_token_id]
             answer_ids = reasoning_trace_output['input_ids'][idx] + [eos_id]    # if ae, eos token
         else:   # lm objective
             print("No need to use LM objective!!!")
