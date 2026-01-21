@@ -776,7 +776,7 @@ class LMFusionModel(nn.Module):
         # else:
         x = torch.randn(bs, seq, token_hidden_dim, dtype=torch.bfloat16).to(q_input_ids.device) * 2.5
         
-        if self.sample_scheduler.config.prediction_type == "flow":
+        if self.sample_scheduler.config["prediction_type"] == "flow":
             self.sample_scheduler._step_index = None
         self.sample_scheduler.set_timesteps(num_inference_steps=50)
         
@@ -857,7 +857,7 @@ class LMFusionModel(nn.Module):
         # initialise latent
         x = torch.randn(bs, seq, token_dim, dtype=torch.bfloat16, device=device)
 
-        if self.sample_scheduler.config.prediction_type == "flow":
+        if self.sample_scheduler.config["prediction_type"] == "flow":
             self.sample_scheduler._step_index = None
         self.sample_scheduler.set_timesteps(num_inference_steps=50)
 
@@ -931,7 +931,7 @@ class LMFusionModel(nn.Module):
         bs, seq, token_hidden_dim = gt_thought_tokens.shape
         x = torch.randn(bs, seq, token_hidden_dim, dtype=torch.bfloat16).to(q_input_ids.device)
         
-        if self.sample_scheduler.config.prediction_type == "flow":
+        if self.sample_scheduler.config["prediction_type"] == "flow":
             self.sample_scheduler._step_index = None
         self.sample_scheduler.set_timesteps(num_inference_steps=50)
 
@@ -1309,12 +1309,12 @@ class LMFusionModel(nn.Module):
 
         model_pred = self.prepare_input(input_ids=batch_input_ids_q, thought_token_embeds=batch_projected_noisy_x, timestep=timestep, cfg_train=True)
 
-        if self.noise_scheduler.config.prediction_type == "epsilon":
+        if self.noise_scheduler.config["prediction_type"] == "epsilon":
             model_target = noise.float()
 
-        elif self.noise_scheduler.config.prediction_type == "sample":
+        elif self.noise_scheduler.config["prediction_type"] == "sample":
             model_target = gt_thought_tokens.float()
-        elif self.noise_scheduler.config.prediction_type == "v_prediction":
+        elif self.noise_scheduler.config["prediction_type"] == "v_prediction":
             model_target = self.noise_scheduler.get_velocity(gt_thought_tokens.float(), noise, timestep)
         else:
             model_target = noise.sub(gt_thought_tokens).float()
