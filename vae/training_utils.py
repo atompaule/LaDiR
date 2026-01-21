@@ -47,7 +47,7 @@ def run_inference(model, lines):
             memory_slots = decompress_memory_slots.to(prompt_answer_embs)
                         
             # Concatenate and clone input embeddings
-            decoder_input_embeddings = torch.cat((memory_slots.unsqueeze(0), prompt_answer_embs), dim=1)
+            decoder_input_embeddings = torch.cat((memory_slots, prompt_answer_embs), dim=1)
             #print("decoder_input_embeddings shape: ", decoder_input_embeddings.size())
 
             output = decoder_input_embeddings.clone()

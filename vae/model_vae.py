@@ -473,7 +473,7 @@ class VAE(torch.nn.Module):
 
             decompress_memory_slots = self.decompress_layer(memory_slots)
             decoder_input_embeddings = torch.cat(
-                (decompress_memory_slots.unsqueeze(0), prompt_answer_embs), dim=1
+                (decompress_memory_slots, prompt_answer_embs), dim=1
             )
             output = decoder_input_embeddings.clone()
 
