@@ -75,7 +75,7 @@ class TrainingArguments(transformers.TrainingArguments):
         },
     )
     fixed_mem_size: int = field(
-        default=3,
+        default=10,
         metadata={"help": "Enabling the fixed mem size."},
     )
     ignore_data_skip: bool = field(
@@ -83,7 +83,7 @@ class TrainingArguments(transformers.TrainingArguments):
         metadata={"help": "Enabling the fixed mem size."},
     )
     mean_compression_rate: int = field(
-        default=128 * 4,
+        default=5,
         metadata={"help": "Mean compression rate; default=4"},
     )
     min_tokens_for_lm: int = field(

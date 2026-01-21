@@ -3,15 +3,16 @@ import math
 import os
 import pathlib
 import random
+from datetime import datetime
 
 import torch
 import torch.distributed as dist
-import wandb
+from model_vae import VAE
 from peft import LoraConfig
 from tqdm import tqdm
 from transformers import Trainer, TrainerCallback
 
-from model_vae import VAE
+import wandb
 
 local_rank = int(os.environ.get("LOCAL_RANK", 0))
 device = torch.device(local_rank) if torch.cuda.is_available() else torch.device("cpu")
@@ -32,7 +33,6 @@ def run_inference(model, lines):
             input_ids = torch.LongTensor([tokenized_text['input_ids']]).to(device)
             #print("input_ids shape: ", input_ids.size())
             memory_slots = model._compress(input_ids).to(device, torch.bfloat16)
-            print("memory_slots shape: ", memory_slots.shape)
 
             decompress_memory_slots = model.decompress_layer(memory_slots)
 
@@ -154,7 +154,19 @@ def train_model(args, notes, model, train_dataset, eval_dataset, model_args, tra
     #     notes=notes
     # )
 
+    if wandb.run is None:
+        run = wandb.init(
+            project=os.environ.get("WANDB_PROJECT", "masters-thesis"),
+            config={
+                "model_args": vars(model_args),
+                "training_args": vars(args)
+            }
+        )
+    run_name = run.name
+
     print("run_name:", training_args.run_name)
+    date_time = datetime.now().strftime("%Y-%m-%d_%H")
+    training_args.run_name = f"{date_time}-{run_name}"
     training_args.output_dir = os.path.join(training_args.output_dir, training_args.run_name)
     
     trainer = Trainer(
@@ -250,6 +262,15 @@ def text_extraction(input_ids, length, lm_ratio=0.0):
         return input_ids[random_start: random_start+length], input_ids[random_start+length:]
 
 def _compute_num_segments(total_length, mem_size, mean_compression_rate):
+    """
+    Computes the number of segments needed to compress a given length of text into memory slots.
+    Args:
+        total_length: The number of tokens in the input text to be compressed to be compressed (e.g., 498 tokens).
+        mem_size: Number of latent vectors per latent block (e.g., 3).
+        mean_compression_rate: How many input tokens can be compressed into a single latent vector (e.g., 512).
+    Returns:
+        The number of latent blocks needed to compress the text (e.g., 1).
+    """
     assert total_length > 0
     num_segments = math.ceil(total_length / (mem_size * mean_compression_rate))  # 128 * 4 -> 1 * (128*4)
     return num_segments
@@ -263,7 +284,7 @@ def pretrain_tokenize_function(
     mean_compression_rate,
     add_special_token_for_lm,
     leave_tokens_for_lm,
-    ae_token_id,
+    ae_token_id, # special token for autoencoding objective
     eos_id,
     #lm_token_id,
     mem, 
@@ -308,7 +329,7 @@ def pretrain_tokenize_function(
         # decoder part: note that in v2, we add mem_tokens to the prompt_ids for easy implementation; which is different from v1 implementation where mem tokens are not in the prompt_ids
         if ae:  # autoencoding objective
             # Why is it mem[0]? Filler memory token, will be overwritten during forward pass.
-            prompt_ids = mem * num_segments + [ae_token_id]
+            prompt_ids = mem * num_segments + [ae_token_id] # memory tokens per block * number of blocks + ae token
             answer_ids = reasoning_trace_output['input_ids'][idx] + [eos_id]    # if ae, eos token
         else:   # lm objective
             print("No need to use LM objective!!!")

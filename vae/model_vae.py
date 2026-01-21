@@ -50,6 +50,7 @@ class VAE(torch.nn.Module):
         self.model_args = model_args
         self.training_args = training_args
         self.model_name = model_args.model_name_or_path
+        print(f"VAE: Loading model {self.model_name}")
         self.icae = AutoModelForCausalLM.from_pretrained(
             self.model_name, torch_dtype=torch.bfloat16
         )

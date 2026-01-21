@@ -42,7 +42,7 @@ class TrainingArguments(transformers.TrainingArguments):
         metadata={"help": "Enabling the fixed mem size."},
     )
     mean_compression_rate: int = field(
-        default=128*4,
+        default=4,
         metadata={"help": "Mean compression rate; default=4"},
     )
     min_tokens_for_lm: int = field(
@@ -113,7 +113,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Fine-tune a LLaMA model with LoRA.")
 
     # Add arguments dynamically
-    parser.add_argument("--model_name_or_path", type=str, default="deepseek-ai/DeepSeek-R1-Distill-Llama-8B", help="Pretrained model path.")
+    parser.add_argument("--model_name_or_path", type=str, required=True, help="Pretrained model path.")
     parser.add_argument("--lora_r", type=int, default=128, help="LoRA rank.")
     parser.add_argument("--lora_alpha", type=int, default=32, help="LoRA scaling factor.")
     parser.add_argument("--lora_dropout", type=float, default=0.05, help="LoRA dropout rate.")

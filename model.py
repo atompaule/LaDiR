@@ -183,10 +183,12 @@ class LMFusionModel(nn.Module):
         # Initialize transformer layers and linear projections
         def _basic_init(module):
             if isinstance(module, nn.Linear):
+                print(f"Initializing Linear {module}")
                 torch.nn.init.xavier_uniform_(module.weight)
                 if module.bias is not None:
                     nn.init.constant_(module.bias, 0)
             elif isinstance(module, nn.Embedding):
+                print(f"Initializing Embedding {module}")
                 torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
         
         self.apply(_basic_init)

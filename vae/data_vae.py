@@ -16,7 +16,7 @@ def load_data(test_size=100, input_type="full_format"):
     processed_data = []
 
     # Replace with your own dataset
-    with open("data/vae_train.jsonl") as f:
+    with open("/home/utsch/LaDiR/data/vae_train.jsonl") as f:
         data = [json.loads(line) for line in f]
 
     for sample in data:
@@ -40,7 +40,7 @@ def load_data(test_size=100, input_type="full_format"):
     print("Dataset loaded successfully...")
 
     # # Inference examples.
-    with open("data/vae_val.jsonl") as f:
+    with open("/home/utsch/LaDiR/data/vae_val.jsonl") as f:
         train_10_inference_examples = [json.loads(line) for line in f]
         random.seed(42)
         train_10_inference_examples = random.sample(train_10_inference_examples, 200)
