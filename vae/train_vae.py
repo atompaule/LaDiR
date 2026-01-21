@@ -136,6 +136,7 @@ class TrainingArguments(transformers.TrainingArguments):
     eval_strategy: str = field(default="no")
     num_train_epochs: int = field(default=1)
     bf16: bool = field(default=True)
+    save_safetensors: bool = field(default=False)
 
 
 def main(model_args, training_args, args, notes):

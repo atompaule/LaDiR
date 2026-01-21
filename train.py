@@ -55,7 +55,10 @@ def main(cfg):
     ae = VAE(ae_model_args, ae_training_args, ae_lora_config)
     print(f"Loading trained checkpoint from {cfg.ae.icae_ckpt}")
 
-    state_dict = load_file(cfg.ae.icae_ckpt)
+    if cfg.ae.icae_ckpt.endswith(".safetensors"):
+        state_dict = load_file(cfg.ae.icae_ckpt)
+    else:
+        state_dict = torch.load(cfg.ae.icae_ckpt, map_location="cpu")
 
     if "state_dict" in state_dict:
         missing_keys, unexpected_keys = ae.load_state_dict(state_dict["state_dict"], strict=False)  # Allow missing keys if needed

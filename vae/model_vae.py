@@ -149,7 +149,12 @@ class VAE(torch.nn.Module):
             print(
                 f"Loading from the pretrained checkpoint: {self.training_args.restore_from}..."
             )
-            state_dict = load_file(self.training_args.restore_from)
+            if self.training_args.restore_from.endswith(".safetensors"):
+                state_dict = load_file(self.training_args.restore_from)
+            else:
+                state_dict = torch.load(
+                    self.training_args.restore_from, map_location="cpu"
+                )
             self.load_state_dict(state_dict)
             print(f"Finished loading from {self.training_args.restore_from}")
         # print("Enabling gradient checkpointing...")
