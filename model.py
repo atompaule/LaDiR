@@ -165,7 +165,7 @@ class LMFusionModel(nn.Module):
         self.time_embed = TimeCondEmbed(cond_dim=self.tht_token_dim, embed_dim=hidden_dim)
         self.t_embedder = TimeCondEmbed(cond_dim=hidden_dim, embed_dim=hidden_dim)
 
-        self.diffusion_batch_mul = 8
+        self.diffusion_batch_mul = 1
         self.gradient_checkpointing = False
         self.prev_icae_params = {}
 

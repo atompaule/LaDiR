@@ -1,3 +1,33 @@
+"""
+Debug this via:
+python -m debugpy --connect n-hpc-login1:5678 --wait-for-client vae/train_vae.py \
+    --run_name vae_train \
+    --model_name_or_path "meta-llama/Llama-3.2-3B" \
+    --lora_r 512 \
+    --lora_alpha 256 \
+    --lora_dropout 0.05 \
+    --output_dir "/work/utsch/masters-thesis/LaDiR/vae_train" \
+    --input_type "full_format" \
+    --test_size 10 \
+    --max_steps 1 \
+    --num_train_epochs 10 \
+    --learning_rate 2e-5 \
+    --lr_scheduler_type "cosine" \
+    --lr_scheduler_kwargs '{"num_cycles": 1}' \
+    --warmup_steps 1000 \
+    --optim "adamw_torch" \
+    --weight_decay 0.03 \
+    --eval_strategy "no" \
+    --eval_interval 1 \
+    --per_device_train_batch_size 1 \
+    --gradient_accumulation_steps 8 \
+    --notes "VAE training experiment" \
+    # --ddp_backend "nccl"
+    # --fsdp "hybrid_shard auto_wrap" \
+    # --fsdp_config '{"backward_prefetch": "backward_pre", "forward_prefetch": true, "cpu_ram_efficient_loading": true, "sync_module_states": true, "transformer_layer_cls_to_wrap": ["LlamaDecoderLayer"], "use_orig_params": true, "activation_checkpointing": false}' \
+
+"""
+
 import argparse
 import json
 import os
@@ -7,10 +37,9 @@ from typing import Optional
 
 import torch
 import transformers
-from peft import LoraConfig
-
 from data_vae import load_data
 from model_vae import VAE
+from peft import LoraConfig
 from training_utils import (
     DataCollatorForDynamicPadding,
     pretrain_tokenize_function,

@@ -169,47 +169,23 @@ def train_model(args, notes, model, train_dataset, eval_dataset, model_args, tra
     # checkpoint = "./ckpts/cd_500k_dim16/checkpoint-6000"
     
     # print(f"Loaded from the checkpoint: {checkpoint}")
-    if list(pathlib.Path(training_args.output_dir).glob('checkpoint*')):
-        print('Resume from last checkpoint')
-        trainer.train(resume_from_checkpoint=True)
-    else:
-        print('Training from scratch!')
-        trainer.train()
+    # if list(pathlib.Path(training_args.output_dir).glob('checkpoint*')):
+    #     print('Resume from last checkpoint')
+    #     trainer.train(resume_from_checkpoint=True)
+    # else:
+    print('Training from scratch!')
+    trainer.train()
     # # trainer.save_model()
     # trainer.log_metrics("train", train_result.metrics)
     # metrics = trainer.evaluate()
     # trainer.log_metrics("eval", metrics)
     # trainer.save_metrics("eval", metrics)
 
-    torch.save(trainer.model.state_dict(), f"{training_args.output_dir}/{training_args.run_name}/model_weights_final.pth")
+    print(f"Saving model in {training_args.output_dir}/model_weights_final.pth")
+    torch.save(trainer.model.state_dict(), f"{training_args.output_dir}/model_weights_final.pth")
 
-    #### 🚀 **Free Up GPU Memory BEFORE Re-Loading Model** ####
-    print("🚀 Clearing VRAM before inference...")
-
-    # Move model to CPU first (prevents GPU tensors lingering)
-    model.to("cpu")
-    del model  # Delete model object
-
-    # Delete Trainer & Free Memory
-    del trainer
-    gc.collect()  # Garbage collection
-    torch.cuda.empty_cache()  # Clear VRAM
-
-    #### 🚀 **Now Reload the Model for Inference** ####
-    print("🚀 Re-loading model for inference...")
-
-    # EVALUATION
-    lora_config = LoraConfig(
-        r=model_args.lora_r,
-        lora_alpha=model_args.lora_alpha,
-        lora_dropout=model_args.lora_dropout,
-        bias="none",
-        task_type="CAUSAL_LM"
-    )
-    model = VAE(model_args, training_args, lora_config)
-    print(f"Loading trained checkpoint from {training_args.output_dir}")
-    model.load_state_dict(torch.load(f"{training_args.output_dir}/{training_args.run_name}/model_weights_final.pth"), strict=False)
-    model = model.to(device)
+    model = trainer.model
+    model.eval()
 
     outputs = run_inference(model, lines)
 

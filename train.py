@@ -1,26 +1,46 @@
-import torch
-from transformers.training_args import TrainingArguments
-from transformers.models.auto.tokenization_auto import AutoTokenizer
-from transformers.models.auto.modeling_auto import AutoModelForCausalLM
-from transformers.models.auto.configuration_auto import AutoConfig
-from transformers import Trainer
-from config import LMFusionConfig
-from dataset import ThoughtDataset, ThoughtDataCollator
-from model import LMFusionModel
+"""
+Debug this via:
+python -m debugpy --connect n-hpc-login1:5678 --wait-for-client train.py --model_name_or_path "meta-llama/Llama-3.2-3B"
+
+Don't forget to edit ae.icae_ckpt and comment out trainer.max_steps in configs/cd_formal_8B_VAE_conn
+"""
+
 import os
-from safetensors.torch import load_file
 import pathlib
+from datetime import datetime
+
+import torch
 from omegaconf import OmegaConf as om
+from peft import LoraConfig
+from safetensors.torch import load_file
+from transformers import Trainer
+from transformers.models.auto.configuration_auto import AutoConfig
+from transformers.models.auto.modeling_auto import AutoModelForCausalLM
+from transformers.models.auto.tokenization_auto import AutoTokenizer
+from transformers.training_args import TrainingArguments
+
+import wandb
+from config import LMFusionConfig
+from dataset import ThoughtDataCollator, ThoughtDataset
+from model import LMFusionModel
 from vae.model_vae import VAE
 from vae.vae_args import parse_args
-from peft import LoraConfig
 
 
 def main(cfg):
+    if wandb.run is None:
+        run = wandb.init(
+            project=os.environ.get("WANDB_PROJECT", "masters-thesis"),
+        )
+    run_name = run.name
+    date_time = datetime.now().strftime("%Y-%m-%d_%H")
 
-    print(f'run name: {cfg.run_name}')
-    local_rank = int(os.environ["LOCAL_RANK"])
-    local_rank = torch.device(local_rank)
+    run_name = f"{date_time}-{run_name}"
+    cfg.trainer.output_dir = f"{cfg.trainer.output_dir}/{run_name}"
+
+    print(f'run_name: {run_name}')
+    print(f"output_dir : {cfg.trainer.output_dir}")
+    local_rank = int(os.environ.get("LOCAL_RANK", 0))
 
     # AE
     ae_lora_config = LoraConfig(
@@ -116,23 +136,22 @@ def main(cfg):
     )
 
     trainable_params = [n for n, p in trainer.model.autoencoder.named_parameters() if p.requires_grad]
-    print(f"Before training Trainable AE parameters:\n{trainable_params}")
+    print(f"Before training, trainable AE parameters (should be empty):\n{trainable_params}")
 
-    if cfg.allow_resume and list(pathlib.Path(cfg.trainer.output_dir).glob('checkpoint*')):
-        print('Resume from last checkpoint!!!!')
-        trainer.train(resume_from_checkpoint=True)
-    else:
-        trainer.train()
+    # if cfg.allow_resume and list(pathlib.Path(cfg.trainer.output_dir).glob('checkpoint*')):
+    #     print('Resume from last checkpoint!!!!')
+    #     trainer.train(resume_from_checkpoint=True)
+    # else:
+    trainer.train()
     print('Done.')
 
 if __name__ == '__main__':
-    import sys
     import os
+    import sys
 
-    if 'RANK' in os.environ:
-        import torch.distributed as dist
-        dist.init_process_group(backend='nccl')
-
+    # if 'RANK' in os.environ:
+    #     import torch.distributed as dist
+    #     dist.init_process_group(backend='nccl')
     #yaml_path, args_list = sys.argv[1], sys.argv[2:]
     args_list = sys.argv[1:]
     yaml_path = "configs/cd_formal_8B_VAE_conn.yaml"
